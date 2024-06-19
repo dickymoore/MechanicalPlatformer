@@ -141,10 +141,17 @@ def update_intent_status(intents, intent_id, status):
 def setup_branch(intent_id):
     branch_name = f"intent-{intent_id}"
     current_branch = subprocess.check_output(["git", "branch", "--show-current"]).strip().decode('utf-8')
-    if current_branch != branch_name:
-        subprocess.run(["git", "checkout", "-b", branch_name], check=True)
-    else:
+
+    # Check if the branch already exists
+    existing_branches = subprocess.check_output(["git", "branch", "--list", branch_name]).strip().decode('utf-8')
+    
+    if existing_branches:
         subprocess.run(["git", "checkout", branch_name], check=True)
+    else:
+        subprocess.run(["git", "checkout", "-b", branch_name], check=True)
+
+    # Pull the latest changes from the remote branch
+    subprocess.run(["git", "pull", "origin", branch_name], check=True)
 
 # Function to commit changes to the branch
 def commit_changes(intent_id):
@@ -155,7 +162,6 @@ def commit_changes(intent_id):
 
 # Function to push changes to the repository
 def push_changes():
-    # print(f"Not pushing right now - leaving that to automation.yml")
     subprocess.run(["git", "push", "origin", "HEAD"], check=True)
 
 # Main function
