@@ -138,6 +138,7 @@ def update_intent_status(intents, intent_id, status):
             break
 
 # Function to set up and switch to a new branch for the intent
+# Function to set up and switch to a new branch for the intent
 def setup_branch(intent_id):
     branch_name = f"intent-{intent_id}"
     current_branch = subprocess.check_output(["git", "branch", "--show-current"]).strip().decode('utf-8')
@@ -147,15 +148,17 @@ def setup_branch(intent_id):
     
     if branch_name in existing_branches:
         subprocess.run(["git", "checkout", branch_name], check=True)
+        # Pull the latest changes from the remote branch if it exists
+        try:
+            subprocess.run(["git", "pull", "origin", branch_name, "--allow-unrelated-histories"], check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Branch {branch_name} does not exist on the remote. Skipping pull.")
     else:
         subprocess.run(["git", "checkout", "-b", branch_name], check=True)
 
     # Set global Git identity
     subprocess.run(["git", "config", "--global", "user.email", "you@example.com"], check=True)
     subprocess.run(["git", "config", "--global", "user.name", "Your Name"], check=True)
-
-    # Pull the latest changes from the remote branch and allow unrelated histories
-    subprocess.run(["git", "pull", "origin", branch_name, "--allow-unrelated-histories"], check=True)
 
 # Function to commit changes to the branch
 def commit_changes(intent_id):
