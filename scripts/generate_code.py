@@ -1,7 +1,7 @@
 import json
 import os
 import subprocess
-from datetime import datetime
+from datetime import datetime, timezone
 import requests
 import openai
 from openai import OpenAI
@@ -48,15 +48,28 @@ def generate_code(intent):
         model="gpt-4",
         messages=[
             {"role": "system", "content": "You are a Terraform and Python expert."},
-            {"role": "user", "content": f"Provide Terraform code to {description} and Python code to test it. The test should verify: {test}"}
+            {"role": "user", "content": f"Provide Terraform code to {description} and Python code to test it. The code must be ready to run immediately without me making any changes. If you need a name for this project, it's: MechanicalPlatform-{intent['id']}. The test should verify: {test}"}
         ]
     )
 
     message_content = response.choices[0].message.content
+    print("ChatGPT response:", message_content)  # Debugging output
+
     parts = message_content.split("```")
 
-    terraform_code = parts[1].strip() if "terraform" in parts[1] else ""
-    test_code = parts[3].strip() if "python" in parts[3] else ""
+    terraform_code = ""
+    test_code = ""
+
+    for i in range(len(parts) - 1):
+        if "tf" in parts[i]:
+            terraform_code = parts[i + 1].strip()
+        elif "python" in parts[i]:
+            test_code = parts[i + 1].strip()
+
+    if not terraform_code:
+        raise ValueError("Terraform code not found in the response.")
+    if not test_code:
+        raise ValueError("Python test code not found in the response.")
 
     intent_id = intent['id']
     os.makedirs(f'terraform/{intent_id}', exist_ok=True)
@@ -72,7 +85,7 @@ def update_intent_status(intents, intent_id, status):
     for intent in intents['intents']:
         if intent['id'] == intent_id:
             intent['status'] = status
-            intent['updated_at'] = datetime.utcnow().isoformat() + 'Z'
+            intent['updated_at'] = datetime.now(timezone.utc).isoformat()
             break
 
 # Function to set up and switch to a new branch for the intent
@@ -120,7 +133,7 @@ def main():
 
                 # Create metadata file to indicate fulfillment
                 with open(f'terraform/{intent_id}/intent_fulfilled.json', 'w') as f:
-                    json.dump({"fulfilled": True, "timestamp": datetime.utcnow().isoformat() + 'Z'}, f, indent=4)
+                    json.dump({"fulfilled": True, "timestamp": datetime.now(timezone.utc).isoformat()}, f, indent=4)
             else:
                 print(f"Intent '{intent['description']}' not fulfilled. Check the logs for details.")
                 update_intent_status(intents, intent_id, 'pending')
