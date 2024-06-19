@@ -150,13 +150,19 @@ def setup_branch(intent_id):
     else:
         subprocess.run(["git", "checkout", "-b", branch_name], check=True)
 
-    # Pull the latest changes from the remote branch and merge
-    subprocess.run(["git", "pull", "origin", branch_name, "--no-rebase", "--allow-unrelated-histories"], check=True)
+    # Set global Git identity
+    subprocess.run(["git", "config", "--global", "user.email", "you@example.com"], check=True)
+    subprocess.run(["git", "config", "--global", "user.name", "Your Name"], check=True)
+
+    # Pull the latest changes from the remote branch and allow unrelated histories
+    subprocess.run(["git", "pull", "origin", branch_name, "--allow-unrelated-histories"], check=True)
 
 # Function to commit changes to the branch
 def commit_changes(intent_id):
+    # Set global Git identity
     subprocess.run(["git", "config", "--global", "user.email", "you@example.com"], check=True)
     subprocess.run(["git", "config", "--global", "user.name", "Your Name"], check=True)
+
     subprocess.run(["git", "add", "."], check=True)
     subprocess.run(["git", "commit", "-m", f"Add code for intent {intent_id}"], check=True)
 
