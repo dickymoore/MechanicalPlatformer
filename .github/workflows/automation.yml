@@ -29,7 +29,7 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
         source venv/bin/activate
-        python main.py generate_terraform_code
+        python ./scripts/main.py generate_terraform_code
 
   generate-test-code:
     runs-on: ubuntu-latest
@@ -54,7 +54,7 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
         source venv/bin/activate
-        python main.py generate_test_code
+        python ./scripts/main.py generate_test_code
 
   commit-changes:
     runs-on: ubuntu-latest
@@ -77,7 +77,7 @@ jobs:
     - name: Run commit_changes
       run: |
         source venv/bin/activate
-        python main.py commit_changes
+        python ./scripts/main.py commit_changes
 
   apply-terraform-code:
     runs-on: ubuntu-latest
@@ -100,7 +100,7 @@ jobs:
     - name: Run apply_terraform_code
       run: |
         source venv/bin/activate
-        python main.py apply_terraform_code
+        python ./scripts/main.py apply_terraform_code
 
   test-outcomes:
     runs-on: ubuntu-latest
@@ -123,7 +123,7 @@ jobs:
     - name: Run test_outcomes
       run: |
         source venv/bin/activate
-        python main.py test_outcomes
+        python ./scripts/main.py test_outcomes
 
     - name: Check outcome
       id: check_outcome
