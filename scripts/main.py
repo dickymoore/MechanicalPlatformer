@@ -68,7 +68,7 @@ def generate_terraform_code(intent):
 
     # Load previous conversation history
     messages = load_conversation_history(intent_id)
-    messages.append({"role": "user", "content": f"Provide Terraform code to {description}. The code must be ready to run immediately without me making any changes. I have these environment variables set: AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY, AWS_REGION. If you need a name for this project, it's: MechanicalPlatform-{intent['id']}. Please include the Terraform code between the keywords 'BEGIN_TERRAFORM_CODE' and 'END_TERRAFORM_CODE'."})
+    messages.append({"role": "user", "content": f"Provide Terraform code to {description}. The code must be ready to run immediately without me making any changes. I have these environment variables set: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION. If you need a name for this project, it's: MechanicalPlatform-{intent['id']}. Please include the Terraform code between the keywords 'BEGIN_TERRAFORM_CODE' and 'END_TERRAFORM_CODE'."})
 
     response = client.chat.completions.create(
         model="gpt-4",
