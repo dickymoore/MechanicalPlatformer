@@ -1,0 +1,13 @@
+# Ignore virtual environment directories
+venv/
+.env/
+env/
+*.pyc
+__pycache__/
+*/.terraform
+.terraform
+*/.terraform/
+.terraform/
+*/.terraform/*
+.terraform/*
+*.exe

@@ -1,0 +1,41 @@
+name: AI-driven Infrastructure Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install openai boto3
+
+      - name: Read intent file and generate code
+        run: python generate_code.py
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Apply Terraform configuration
+        run: |
+          cd terraform/intent_name/
+          terraform init
+          terraform apply -auto-approve
+        continue-on-error: true
+
+      - name: Run tests
+        run: python test_website.py
+        continue-on-error: true
+
+      - name: Notify success
+        if: success()
+        run: python notify_success.py

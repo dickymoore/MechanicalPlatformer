@@ -1,0 +1,18 @@
+{
+    "intents": [
+      {
+        "id": "basic-website",
+        "description": "Create a publically-accessible website using S3 and CloudFront",
+        "test": "The website should display the message: 'Hello! I have been made automatically on <today's date> by ChatGPT based on instructions from Dicky Moore.'",
+        "status": "pending",
+        "actions": [
+          "Generate Terraform code",
+          "Deploy infrastructure",
+          "Run tests"
+        ],
+        "created_at": "2024-06-19T11:00:00Z",
+        "updated_at": "2024-06-19T12:00:00Z"
+      }
+    ]
+  }
+  
