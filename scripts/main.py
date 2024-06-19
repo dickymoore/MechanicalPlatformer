@@ -170,8 +170,6 @@ def main():
     parser = argparse.ArgumentParser(description='Automation Script')
     parser.add_argument('action', choices=['generate_terraform_code', 'generate_test_code', 'commit_changes', 'apply_terraform_code', 'test_outcomes'], help='Action to perform')
     args = parser.parse_args()
-
-    load_and_validate_openai_api_key()
     intents_file = 'intents.json'
     intents = load_intents(intents_file)
 
