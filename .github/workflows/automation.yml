@@ -6,6 +6,10 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: write  # Explicitly set write permission for contents
+
+
 jobs:
   generate-terraform-code:
     runs-on: ubuntu-latest
