@@ -26,6 +26,17 @@ def load_and_validate_openai_api_key():
     except Exception as e:
         raise ValueError(f"Failed to validate OpenAI API key: {e}")
 
+def save_conversation_history(intent_id, messages):
+    os.makedirs('conversation_history', exist_ok=True)
+    with open(f'conversation_history/{intent_id}.json', 'w') as f:
+        json.dump(messages, f, indent=4)
+
+def load_conversation_history(intent_id):
+    if os.path.exists(f'conversation_history/{intent_id}.json'):
+        with open(f'conversation_history/{intent_id}.json', 'r') as f:
+            return json.load(f)
+    return [{"role": "system", "content": "You are a helpful assistant."}]
+
 # Function to load intents from a file
 def load_intents(file_path):
     with open(file_path, 'r') as f:
@@ -53,17 +64,23 @@ def generate_terraform_code(intent):
     )
 
     description = intent['description']
+    intent_id = intent['id']
+
+    # Load previous conversation history
+    messages = load_conversation_history(intent_id)
+    messages.append({"role": "user", "content": f"Provide Terraform code to {description}. The code must be ready to run immediately without me making any changes. I have these environment variables set: AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY, AWS_REGION. If you need a name for this project, it's: MechanicalPlatform-{intent['id']}. Please include the Terraform code between the keywords 'BEGIN_TERRAFORM_CODE' and 'END_TERRAFORM_CODE'."})
 
     response = client.chat.completions.create(
         model="gpt-4",
-        messages=[
-            {"role": "system", "content": "You are a Terraform expert."},
-            {"role": "user", "content": f"Provide Terraform code to {description}. The code must be ready to run immediately without me making any changes. I have these environment variables set: AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY, AWS_REGION. If you need a name for this project, it's: MechanicalPlatform-{intent['id']}. Please include the Terraform code between the keywords 'BEGIN_TERRAFORM_CODE' and 'END_TERRAFORM_CODE'."}
-        ]
+        messages=messages
     )
 
     message_content = response.choices[0].message.content
     print("ChatGPT response for Terraform code:", message_content)
+
+    # Save the new conversation history
+    messages.append({"role": "assistant", "content": message_content})
+    save_conversation_history(intent_id, messages)
 
     terraform_code = extract_code_between_keywords(message_content, "BEGIN_TERRAFORM_CODE", "END_TERRAFORM_CODE")
     terraform_code = remove_backticks(terraform_code)
@@ -71,7 +88,6 @@ def generate_terraform_code(intent):
     if not terraform_code:
         raise ValueError("Terraform code not found in the response.")
 
-    intent_id = intent['id']
     os.makedirs(f'terraform/{intent_id}', exist_ok=True)
     with open(f'terraform/{intent_id}/main.tf', 'w') as f:
         f.write(terraform_code)
@@ -83,24 +99,29 @@ def generate_test_code(intent):
     )
 
     test = intent['test']
+    intent_id = intent['id']
+
+    # Load previous conversation history
+    messages = load_conversation_history(intent_id)
+    messages.append({"role": "user", "content": f"Provide Python code to test the following: {test}. The code must be ready to run immediately without me making any changes. Please respond with only the Python code between the delimiters START_CODE and END_CODE."})
 
     response = client.chat.completions.create(
         model="gpt-4",
-        messages=[
-            {"role": "system", "content": "You are a Python expert."},
-            {"role": "user", "content": f"Provide Python code to test the following: {test}. The code must be ready to run immediately without me making any changes. Please respond with only the Python code between the delimiters START_CODE and END_CODE."}
-        ]
+        messages=messages
     )
 
     message_content = response.choices[0].message.content
     print("ChatGPT response for test code:", message_content)  # Debugging output
+
+    # Save the new conversation history
+    messages.append({"role": "assistant", "content": message_content})
+    save_conversation_history(intent_id, messages)
 
     test_code = extract_code_between_delimiters(message_content, "START_CODE", "END_CODE")
 
     if not test_code:
         raise ValueError("Python test code not found in the response.")
 
-    intent_id = intent['id']
     os.makedirs(f'test/{intent_id}', exist_ok=True)
     with open(f'test/{intent_id}/test_{intent_id}.py', 'w') as f:
         f.write(test_code)
