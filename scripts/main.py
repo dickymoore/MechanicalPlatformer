@@ -26,17 +26,6 @@ def load_and_validate_openai_api_key():
     except Exception as e:
         raise ValueError(f"Failed to validate OpenAI API key: {e}")
 
-def save_conversation_history(intent_id, messages):
-    os.makedirs('conversation_history', exist_ok=True)
-    with open(f'conversation_history/{intent_id}.json', 'w') as f:
-        json.dump(messages, f, indent=4)
-
-def load_conversation_history(intent_id):
-    if os.path.exists(f'conversation_history/{intent_id}.json'):
-        with open(f'conversation_history/{intent_id}.json', 'r') as f:
-            return json.load(f)
-    return [{"role": "system", "content": "You are a helpful assistant."}]
-
 # Function to load intents from a file
 def load_intents(file_path):
     with open(file_path, 'r') as f:
@@ -57,6 +46,17 @@ def extract_code_between_keywords(response, start_keyword, end_keyword):
         return ""
     return response[start:end].strip()
 
+def save_conversation_history(intent_id, messages):
+    os.makedirs('conversation_history', exist_ok=True)
+    with open(f'conversation_history/{intent_id}.json', 'w') as f:
+        json.dump(messages, f, indent=4)
+
+def load_conversation_history(intent_id):
+    if os.path.exists(f'conversation_history/{intent_id}.json'):
+        with open(f'conversation_history/{intent_id}.json', 'r') as f:
+            return json.load(f)
+    return [{"role": "system", "content": "You are a helpful assistant."}]
+
 # Function to generate Terraform code based on an intent
 def generate_terraform_code(intent):
     client = OpenAI(
@@ -66,9 +66,8 @@ def generate_terraform_code(intent):
     description = intent['description']
     intent_id = intent['id']
 
-    # Load previous conversation history
     messages = load_conversation_history(intent_id)
-    messages.append({"role": "user", "content": f"Provide Terraform code to {description}. The code must be ready to run immediately without me making any changes. I have these environment variables set: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION. If you need a name for this project, it's: MechanicalPlatform-{intent['id']}. Please include the Terraform code between the keywords 'BEGIN_TERRAFORM_CODE' and 'END_TERRAFORM_CODE'."})
+    messages.append({"role": "user", "content": f"Provide Terraform code to {description}. The code must be ready to run immediately without me making any changes. I have these environment variables set: AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY, AWS_REGION. If you need a name for this project, it's: MechanicalPlatform-{intent['id']}. Please include the Terraform code between the keywords 'BEGIN_TERRAFORM_CODE' and 'END_TERRAFORM_CODE'."})
 
     response = client.chat.completions.create(
         model="gpt-4",
@@ -78,7 +77,6 @@ def generate_terraform_code(intent):
     message_content = response.choices[0].message.content
     print("ChatGPT response for Terraform code:", message_content)
 
-    # Save the new conversation history
     messages.append({"role": "assistant", "content": message_content})
     save_conversation_history(intent_id, messages)
 
@@ -101,7 +99,6 @@ def generate_test_code(intent):
     test = intent['test']
     intent_id = intent['id']
 
-    # Load previous conversation history
     messages = load_conversation_history(intent_id)
     messages.append({"role": "user", "content": f"Provide Python code to test the following: {test}. The code must be ready to run immediately without me making any changes. Please respond with only the Python code between the delimiters START_CODE and END_CODE."})
 
@@ -111,9 +108,8 @@ def generate_test_code(intent):
     )
 
     message_content = response.choices[0].message.content
-    print("ChatGPT response for test code:", message_content)  # Debugging output
+    print("ChatGPT response for test code:", message_content)
 
-    # Save the new conversation history
     messages.append({"role": "assistant", "content": message_content})
     save_conversation_history(intent_id, messages)
 
@@ -152,24 +148,22 @@ def setup_branch(intent_id):
 
 # Function to commit changes to the branch
 def commit_changes(intent_id):
+    subprocess.run(["git", "config", "--global", "user.email", "you@example.com"], check=True)
+    subprocess.run(["git", "config", "--global", "user.name", "Your Name"], check=True)
     subprocess.run(["git", "add", "."], check=True)
     subprocess.run(["git", "commit", "-m", f"Add code for intent {intent_id}"], check=True)
-    subprocess.run(["git", "push", "-u", "origin", f"intent-{intent_id}"], check=True)
 
-def apply_terraform_code(intent_id):
-    result = subprocess.run(f"cd terraform/{intent_id} && terraform init && terraform apply -auto-approve", shell=True)
-    if result.returncode != 0:
-        raise RuntimeError(f"Terraform apply failed for {intent_id}")
+# Function to push changes to the repository
+def push_changes():
+    subprocess.run(["git", "push", "origin", "HEAD"], check=True)
 
-def test_outcomes(intent_id):
-    result = subprocess.run(f"python test/{intent_id}/test_{intent_id}.py", shell=True)
-    if result.returncode != 0:
-        raise RuntimeError(f"Tests failed for {intent_id}")
-
+# Main function
 def main():
-    parser = argparse.ArgumentParser(description='Automation Script')
-    parser.add_argument('action', choices=['generate_terraform_code', 'generate_test_code', 'commit_changes', 'apply_terraform_code', 'test_outcomes'], help='Action to perform')
+    parser = argparse.ArgumentParser()
+    parser.add_argument("command", choices=["generate_terraform_code", "generate_test_code", "commit_changes", "apply_terraform_code", "test_outcomes"])
     args = parser.parse_args()
+
+    load_and_validate_openai_api_key()
     intents_file = 'intents.json'
     intents = load_intents(intents_file)
 
@@ -178,21 +172,28 @@ def main():
             print(f"Processing intent: {intent['description']}")
             intent_id = intent['id']
 
-            setup_branch(intent_id)
-
-            if args.action == 'generate_terraform_code':
+            if args.command == "generate_terraform_code":
+                setup_branch(intent_id)
                 generate_terraform_code(intent)
-            elif args.action == 'generate_test_code':
+            elif args.command == "generate_test_code":
+                setup_branch(intent_id)
                 generate_test_code(intent)
-            elif args.action == 'commit_changes':
+            elif args.command == "commit_changes":
                 commit_changes(intent_id)
-            elif args.action == 'apply_terraform_code':
-                apply_terraform_code(intent_id)
-            elif args.action == 'test_outcomes':
-                test_outcomes(intent_id)
-
-            update_intent_status(intents, intent_id, 'fulfilled')
-            save_intents(intents_file, intents)
+                push_changes()
+            elif args.command == "apply_terraform_code":
+                subprocess.run(f"cd terraform/{intent_id} && terraform init && terraform apply -auto-approve", shell=True)
+            elif args.command == "test_outcomes":
+                result = subprocess.run(f"python test/{intent_id}/test_{intent_id}.py", shell=True)
+                if result.returncode == 0:
+                    print(f"Intent '{intent['description']}' fulfilled.")
+                    update_intent_status(intents, intent_id, 'fulfilled')
+                    save_intents(intents_file, intents)
+                    with open(f'terraform/{intent_id}/intent_fulfilled.json', 'w') as f:
+                        json.dump({"fulfilled": True, "timestamp": datetime.now(timezone.utc).isoformat()}, f, indent=4)
+                else:
+                    print(f"Intent '{intent['description']}' not fulfilled. Check the logs for details.")
+                    update_intent_status(intents, intent_id, 'pending')
 
 if __name__ == "__main__":
     main()
