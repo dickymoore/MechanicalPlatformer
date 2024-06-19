@@ -63,21 +63,24 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
-
-    - name: Install dependencies
+    - name: Set Git user
       run: |
-        python -m venv venv
-        source venv/bin/activate
-        pip install -r requirements.txt
+        git config --global user.email "you@example.com"
+        git config --global user.name "Your Name"
 
-    - name: Run commit_changes
+    - name: Add changes
       run: |
-        source venv/bin/activate
-        python ./scripts/main.py commit_changes
+        git add .
+
+    - name: Commit changes
+      run: |
+        git commit -m "Add code for intent"
+
+    - name: Push changes
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git push origin HEAD
 
   apply-terraform-code:
     runs-on: ubuntu-latest
@@ -98,6 +101,8 @@ jobs:
         pip install -r requirements.txt
 
     - name: Run apply_terraform_code
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
         source venv/bin/activate
         python ./scripts/main.py apply_terraform_code
@@ -121,6 +126,8 @@ jobs:
         pip install -r requirements.txt
 
     - name: Run test_outcomes
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
         source venv/bin/activate
         python ./scripts/main.py test_outcomes
