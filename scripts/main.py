@@ -145,13 +145,13 @@ def setup_branch(intent_id):
     # Check if the branch already exists
     existing_branches = subprocess.check_output(["git", "branch", "--list", branch_name]).strip().decode('utf-8')
     
-    if existing_branches:
+    if branch_name in existing_branches:
         subprocess.run(["git", "checkout", branch_name], check=True)
     else:
         subprocess.run(["git", "checkout", "-b", branch_name], check=True)
 
-    # Pull the latest changes from the remote branch
-    subprocess.run(["git", "pull", "origin", branch_name], check=True)
+    # Pull the latest changes from the remote branch and merge
+    subprocess.run(["git", "pull", "origin", branch_name, "--no-rebase"], check=True)
 
 # Function to commit changes to the branch
 def commit_changes(intent_id):
