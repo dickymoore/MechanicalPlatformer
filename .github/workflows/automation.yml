@@ -33,6 +33,7 @@ jobs:
 
   generate-test-code:
     runs-on: ubuntu-latest
+    needs: generate-terraform-code
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -57,6 +58,7 @@ jobs:
 
   commit-changes:
     runs-on: ubuntu-latest
+    needs: generate-test-code
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -79,6 +81,7 @@ jobs:
 
   apply-terraform-code:
     runs-on: ubuntu-latest
+    needs: commit-changes
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -101,6 +104,7 @@ jobs:
 
   test-outcomes:
     runs-on: ubuntu-latest
+    needs: apply-terraform-code
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -120,3 +124,24 @@ jobs:
       run: |
         source venv/bin/activate
         python main.py test_outcomes
+
+    - name: Check outcome
+      id: check_outcome
+      run: |
+        if [ $? -ne 0 ]; then
+          echo "outcome=fail" >> $GITHUB_ENV
+        else
+          echo "outcome=pass" >> $GITHUB_ENV
+        fi
+
+    - name: Dispatch workflow on failure
+      if: env.outcome == 'fail'
+      uses: actions/github-script@v4
+      with:
+        script: |
+          github.rest.actions.createWorkflowDispatch({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            workflow_id: 'automation.yml',
+            ref: 'main'
+          })
