@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import requests
 import openai
 from openai import OpenAI
+import argparse
 
 # Function to load and validate OpenAI API key
 def load_and_validate_openai_api_key():
@@ -45,7 +46,6 @@ def extract_code_between_keywords(response, start_keyword, end_keyword):
         return ""
     return response[start:end].strip()
 
-
 # Function to generate Terraform code based on an intent
 def generate_terraform_code(intent):
     client = OpenAI(
@@ -65,10 +65,7 @@ def generate_terraform_code(intent):
     message_content = response.choices[0].message.content
     print("ChatGPT response for Terraform code:", message_content)
 
-    # Extract the Terraform code block
     terraform_code = extract_code_between_keywords(message_content, "BEGIN_TERRAFORM_CODE", "END_TERRAFORM_CODE")
-
-    # Remove backticks from the extracted code
     terraform_code = remove_backticks(terraform_code)
 
     if not terraform_code:
@@ -138,8 +135,21 @@ def commit_changes(intent_id):
     subprocess.run(["git", "commit", "-m", f"Add code for intent {intent_id}"], check=True)
     subprocess.run(["git", "push", "-u", "origin", f"intent-{intent_id}"], check=True)
 
-# Main function
+def apply_terraform_code(intent_id):
+    result = subprocess.run(f"cd terraform/{intent_id} && terraform init && terraform apply -auto-approve", shell=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"Terraform apply failed for {intent_id}")
+
+def test_outcomes(intent_id):
+    result = subprocess.run(f"python test/{intent_id}/test_{intent_id}.py", shell=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"Tests failed for {intent_id}")
+
 def main():
+    parser = argparse.ArgumentParser(description='Automation Script')
+    parser.add_argument('action', choices=['generate_terraform_code', 'generate_test_code', 'commit_changes', 'apply_terraform_code', 'test_outcomes'], help='Action to perform')
+    args = parser.parse_args()
+
     load_and_validate_openai_api_key()
     intents_file = 'intents.json'
     intents = load_intents(intents_file)
@@ -150,30 +160,20 @@ def main():
             intent_id = intent['id']
 
             setup_branch(intent_id)
-            generate_terraform_code(intent)
-            exit()
-            generate_test_code(intent)
-            commit_changes(intent_id)
 
-            # # Apply Terraform configuration
-            # result = subprocess.run(f"cd terraform/{intent_id} && terraform init && terraform apply -auto-approve", shell=True)
-            # if result.returncode != 0:
-            #     print(f"Terraform apply failed for {intent_id}")
-            #     continue
+            if args.action == 'generate_terraform_code':
+                generate_terraform_code(intent)
+            elif args.action == 'generate_test_code':
+                generate_test_code(intent)
+            elif args.action == 'commit_changes':
+                commit_changes(intent_id)
+            elif args.action == 'apply_terraform_code':
+                apply_terraform_code(intent_id)
+            elif args.action == 'test_outcomes':
+                test_outcomes(intent_id)
 
-            # # Run tests
-            # result = subprocess.run(f"python test/{intent_id}/test_{intent_id}.py", shell=True)
-            # if result.returncode == 0:
-            #     print(f"Intent '{intent['description']}' fulfilled.")
-            #     update_intent_status(intents, intent_id, 'fulfilled')
-            #     save_intents(intents_file, intents)
-
-            #     # Create metadata file to indicate fulfillment
-            #     with open(f'terraform/{intent_id}/intent_fulfilled.json', 'w') as f:
-            #         json.dump({"fulfilled": True, "timestamp": datetime.now(timezone.utc).isoformat()}, f, indent=4)
-            # else:
-            #     print(f"Intent '{intent['description']}' not fulfilled. Check the logs for details.")
-            #     update_intent_status(intents, intent_id, 'pending')
+            update_intent_status(intents, intent_id, 'fulfilled')
+            save_intents(intents_file, intents)
 
 if __name__ == "__main__":
     main()
