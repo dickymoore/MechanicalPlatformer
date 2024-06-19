@@ -151,7 +151,7 @@ def setup_branch(intent_id):
         subprocess.run(["git", "checkout", "-b", branch_name], check=True)
 
     # Pull the latest changes from the remote branch and merge
-    subprocess.run(["git", "pull", "origin", branch_name, "--no-rebase"], check=True)
+    subprocess.run(["git", "pull", "origin", branch_name, "--no-rebase", "--allow-unrelated-histories"]], check=True)
 
 # Function to commit changes to the branch
 def commit_changes(intent_id):
