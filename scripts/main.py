@@ -155,7 +155,7 @@ def commit_changes(intent_id):
 
 # Function to push changes to the repository
 def push_changes():
-    subprocess.run(["git", "push", "origin", "HEAD"], check=True)
+    # subprocess.run(["git", "push", "origin", "HEAD"], check=True)
 
 # Main function
 def main():
