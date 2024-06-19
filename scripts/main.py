@@ -155,8 +155,8 @@ def commit_changes(intent_id):
 
 # Function to push changes to the repository
 def push_changes():
-    print(f"Not pushing right now - leaving that to automation.yml")
-    # subprocess.run(["git", "push", "origin", "HEAD"], check=True)
+    # print(f"Not pushing right now - leaving that to automation.yml")
+    subprocess.run(["git", "push", "origin", "HEAD"], check=True)
 
 # Main function
 def main():

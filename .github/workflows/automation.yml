@@ -32,15 +32,15 @@ jobs:
         python ./scripts/main.py generate_terraform_code
         python ./scripts/main.py commit_changes
 
-    - name: Push changes
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        git config --global user.email "you@example.com"
-        git config --global user.name "Your Name"
-        git add .
-        git commit -m "Automated report: Terraform code generated"
-        git push origin HEAD
+    # - name: Push changes
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   run: |
+    #     git config --global user.email "you@example.com"
+    #     git config --global user.name "Your Name"
+    #     git add .
+    #     git commit -m "Automated report: Terraform code generated"
+    #     git push origin HEAD
 
   generate-test-code:
     runs-on: ubuntu-latest
@@ -68,15 +68,15 @@ jobs:
         python ./scripts/main.py generate_test_code
         python ./scripts/main.py commit_changes
 
-    - name: Push changes
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        git config --global user.email "you@example.com"
-        git config --global user.name "Your Name"
-        git add .
-        git commit -m "Automated report: Test code generated"
-        git push origin HEAD
+    # - name: Push changes
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   run: |
+    #     git config --global user.email "you@example.com"
+    #     git config --global user.name "Your Name"
+    #     git add .
+    #     git commit -m "Automated report: Test code generated"
+    #     git push origin HEAD
 
   apply-terraform-code:
     runs-on: ubuntu-latest
