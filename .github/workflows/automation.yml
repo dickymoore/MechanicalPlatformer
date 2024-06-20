@@ -64,7 +64,7 @@ jobs:
 
   apply-terraform-code:
     runs-on: ubuntu-latest
-    needs: generate-test-code
+    needs: generate-terraform-code
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
