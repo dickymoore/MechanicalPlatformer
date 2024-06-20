@@ -192,10 +192,10 @@ def main():
             branch_name = f"intent-{intent_id}"
 
             if args.command == "generate_terraform_code":
-                setup_branch(intent_id)
+                # setup_branch(intent_id)
                 generate_terraform_code(intent)
             elif args.command == "generate_test_code":
-                setup_branch(intent_id)
+                # setup_branch(intent_id)
                 generate_test_code(intent)
             elif args.command == "commit_changes":
                 commit_changes(intent_id)
