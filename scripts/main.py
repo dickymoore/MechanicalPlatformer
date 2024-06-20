@@ -136,9 +136,6 @@ def update_intent_status(intents, intent_id, status):
             intent['status'] = status
             intent['updated_at'] = datetime.now(timezone.utc).isoformat()
             break
-
-# Function to set up and switch to a new branch for the intent
-# Function to set up and switch to a new branch for the intent
 def setup_branch(intent_id):
     branch_name = f"intent-{intent_id}"
     current_branch = subprocess.check_output(["git", "branch", "--show-current"]).strip().decode('utf-8')
@@ -170,7 +167,14 @@ def commit_changes(intent_id):
     subprocess.run(["git", "commit", "-m", f"Add code for intent {intent_id}"], check=True)
 
 # Function to push changes to the repository
+# Function to push changes to the repository
 def push_changes():
+    try:
+        subprocess.run(["git", "pull", "origin", "HEAD", "--rebase"], check=True)
+    except subprocess.CalledProcessError as e:
+        print("Rebase failed. Trying to merge instead.")
+        subprocess.run(["git", "pull", "origin", "HEAD", "--allow-unrelated-histories"], check=True)
+    
     subprocess.run(["git", "push", "origin", "HEAD"], check=True)
 
 # Main function
