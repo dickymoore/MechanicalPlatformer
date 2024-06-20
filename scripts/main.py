@@ -157,14 +157,14 @@ def setup_branch(intent_id):
         subprocess.run(["git", "checkout", "-b", branch_name], check=True)
 
     # Set global Git identity
-    subprocess.run(["git", "config", "--global", "user.email", "you@example.com"], check=True)
-    subprocess.run(["git", "config", "--global", "user.name", "Your Name"], check=True)
+    subprocess.run(["git", "config", "--global", "user.email", "mechanicalplatformer@noemail.com"], check=True)
+    subprocess.run(["git", "config", "--global", "user.name", "Mechanical Platformer"], check=True)
 
 # Function to commit changes to the branch
 def commit_changes(intent_id):
     # Set global Git identity
-    subprocess.run(["git", "config", "--global", "user.email", "you@example.com"], check=True)
-    subprocess.run(["git", "config", "--global", "user.name", "Your Name"], check=True)
+    subprocess.run(["git", "config", "--global", "user.email", "mechanicalplatformer@noemail.com"], check=True)
+    subprocess.run(["git", "config", "--global", "user.name", "Mechanical Platformer"], check=True)
 
     subprocess.run(["git", "add", "."], check=True)
     subprocess.run(["git", "commit", "-m", f"Add code for intent {intent_id}"], check=True)
