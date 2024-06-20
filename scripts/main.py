@@ -145,17 +145,18 @@ def setup_branch(intent_id):
     
     if branch_name in existing_branches:
         subprocess.run(["git", "checkout", branch_name], check=True)
-        # Pull the latest changes from the remote branch if it exists
-        try:
-            subprocess.run(["git", "pull", "origin", branch_name, "--allow-unrelated-histories"], check=True)
-        except subprocess.CalledProcessError as e:
-            print(f"Branch {branch_name} does not exist on the remote. Skipping pull.")
     else:
         subprocess.run(["git", "checkout", "-b", branch_name], check=True)
-
+    
     # Set global Git identity
     subprocess.run(["git", "config", "--global", "user.email", "mechanicalplatformer@noemail.com"], check=True)
     subprocess.run(["git", "config", "--global", "user.name", "Mechanical Platformer"], check=True)
+    
+    # Pull the latest changes from the remote branch if it exists
+    try:
+        subprocess.run(["git", "pull", "origin", branch_name, "--allow-unrelated-histories"], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Branch {branch_name} does not exist on the remote. Skipping pull.")
 
 # Function to commit changes to the branch
 def commit_changes(intent_id):
@@ -166,18 +167,15 @@ def commit_changes(intent_id):
     subprocess.run(["git", "add", "."], check=True)
     subprocess.run(["git", "commit", "-m", f"Add code for intent {intent_id}"], check=True)
 
-# Function to push changes to the repository
-# Function to push changes to the repository
-def push_changes():
+def push_changes(branch_name):
     try:
-        subprocess.run(["git", "pull", "origin", "HEAD", "--rebase"], check=True)
+        subprocess.run(["git", "pull", "origin", branch_name, "--rebase"], check=True)
     except subprocess.CalledProcessError as e:
         print("Rebase failed. Trying to merge instead.")
-        subprocess.run(["git", "pull", "origin", "HEAD", "--allow-unrelated-histories"], check=True)
+        subprocess.run(["git", "pull", "origin", branch_name, "--allow-unrelated-histories"], check=True)
     
-    subprocess.run(["git", "push", "origin", "HEAD"], check=True)
+    subprocess.run(["git", "push", "origin", branch_name], check=True)
 
-# Main function
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("command", choices=["generate_terraform_code", "generate_test_code", "commit_changes", "apply_terraform_code", "test_outcomes"])
@@ -191,6 +189,7 @@ def main():
         if intent['status'] == 'pending':
             print(f"Processing intent: {intent['description']}")
             intent_id = intent['id']
+            branch_name = f"intent-{intent_id}"
 
             if args.command == "generate_terraform_code":
                 setup_branch(intent_id)
@@ -200,7 +199,7 @@ def main():
                 generate_test_code(intent)
             elif args.command == "commit_changes":
                 commit_changes(intent_id)
-                push_changes()
+                push_changes(branch_name)
             elif args.command == "apply_terraform_code":
                 subprocess.run(f"cd terraform/{intent_id} && terraform init && terraform apply -auto-approve", shell=True)
             elif args.command == "test_outcomes":
